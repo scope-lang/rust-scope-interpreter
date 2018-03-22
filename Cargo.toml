@@ -1,0 +1,8 @@
+[package]
+name = "rust-scope-interpreter"
+version = "0.1.0"
+authors = ["Cole Kissane <coler706@gmail.com>"]
+
+[dependencies]
+pest = "^1.0"
+pest_derive = "^1.0"

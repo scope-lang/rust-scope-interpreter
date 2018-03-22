@@ -1,0 +1,97 @@
+module = _{ soi ~ statement* ~ eoi }
+
+// conditional is technically an expression too but it can be used as a statement
+// without a semicolon as well
+statement = { declaration | assignment | while_loop | conditional | (expr ~ semi) | comment }
+
+comment = @{ block_comment | line_comment }
+line_comment = _{ "//" ~ (!("\r" | "\n") ~ any)* ~ ("\n" | "\r\n" | "\r" | eoi) }
+block_comment = _{ "/*" ~ ((!("*/") ~ any) | block_comment)* ~ "*/" }
+
+assignment = { identifier ~ op_assign ~ expr ~ semi}
+declaration = { "let" ~ "mut"? ~ pattern ~ op_declare_type ~ type_def ~ (op_assign ~ expr)? ~ semi}
+op_declare_type = { ":" }
+op_assign = { "=" }
+pattern = { identifier }
+
+type_def = _{ identifier | array_type }
+array_type = { "[" ~ type_def ~ semi ~ array_size ~ "]" }
+array_size = _{ unspecified | expr }
+unspecified = { "_" }
+
+while_loop = { "while" ~ expr ~ block }
+
+bool_or = { op_bool_or }
+bool_and = { op_bool_and }
+comparison = { op_eq | op_ne | op_ge | op_le | op_gt | op_lt }
+expr = {
+
+
+    // Ordered from lowest precedence to highest precedence
+
+    // NOTE: Order matters! { "<" | "<=" } will never match "<="
+
+    bool_not | func_call | field_access | string_literal | bool_literal | identifier | conditional | number
+}
+op_bool_or = { "||" }
+op_bool_and = { "&&" }
+op_eq = { "==" }
+op_ne = { "!=" }
+op_ge = { ">=" }
+op_le = { "<=" }
+op_gt = { ">" }
+op_lt = { "<" }
+
+bool_not = _{ op_bool_not ~ expr }
+op_bool_not = { "!" }
+
+conditional = { "if" ~ expr ~ block ~ (op_else_if ~ expr ~ block)* ~ (op_else ~ block)? }
+op_else_if = { "else if" }
+op_else = { "else" }
+
+// This allows {} and {statement; statement; statement;} and {statement; expr} and {expr}
+block = _{ block_start ~ statement* ~ expr? ~ block_end }
+block_start = { "{" }
+block_end = { "}" }
+
+func_call = { identifier ~ func_args }
+field_access = { identifier ~ op_access ~ identifier ~ func_args? }
+op_access = { "." }
+
+// This allows () and (func_arg, func_arg) and (func_arg) and (func_arg,)
+func_args = _{ func_args_start ~ (func_arg ~ ",")* ~ func_arg? ~ func_args_end }
+func_args_start = { "(" }
+func_args_end = { ")" }
+func_arg = _{ expr }
+
+string_literal = @{ "b\"" ~ literal_char* ~ "\"" }
+literal_char = { escape_sequence | (!"\"" ~ any) }
+escape_sequence = _{ "\\\\" | "\\\"" | "\\\'" | "\\n" | "\\r" | "\\t" | "\\0" }
+
+bool_literal = @{ "true" | "false" }
+
+identifier = @{ !keyword ~ (alpha | "_") ~ (alphanumeric | "_")* }
+alpha = _{ 'a'..'z' | 'A'..'Z' }
+alphanumeric = _{ alpha | '0'..'9' }
+
+number = @{ "0" | (nonzero ~ digit*) }
+// Allow "_" in numbers for grouping: 1_000_000 == 1000000
+digit = _{ "0" | nonzero | "_" }
+nonzero = _{ '1'..'9' }
+
+whitespace = _{ " " | "\t" | "\u{000C}" | "\r" | "\n" }
+// NOTE: When changing this code, make sure you don't have a subset of a word before
+// another word. For example: { "type" | "typeof" } will never match "typeof"
+keyword = @{
+    "abstract" | "as" | "become" | "break" | "byte" | "class" | "clear" |
+    "const" | "continue" | "do" | "else" | "enum" | "eval" | "export" |
+    "extern" | "false" | "final" | "fn" | "for" | "if" | "impl" | "import" |
+    "in" | "let" | "loop" | "match" | "mod" | "move" | "mut" | "of" |
+    "out" | "pub" | "raw" | "ref" | "return" | "self" | "static" |
+    "struct" | "super" | "trait" | "true" | "typeof" | "type" | "unsafe" |
+    "use" | "where" | "while" | "yield"
+}
+
+// These are separate rules because we can use the generated rules and tokens to provide
+// better error messages
+semi = { ";" }
