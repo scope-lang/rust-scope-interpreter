@@ -20,12 +20,15 @@ pub trait Thing<'p> {
 pub trait Evaluable {
     fn eval(&self,context: &mut Thing) -> Thing;
 }
+use std::marker::PhantomData;
 
-pub struct Undef<'p>;
+pub struct Undef<'p>{
+    phantom: PhantomData<&'p i64>,
+}
 
 impl<'p> Thing<'p> for Undef<'p>{
     fn getItem(&mut self, key:&mut String ) -> &Thing<'p>{
-        return &Undef::new();
+        return &Undef {phantom:PhantomData}
     }
     fn keys(&self) -> RustValue{
         let mut keyList:HashMap<String,RustValue>=HashMap::new();
@@ -42,7 +45,7 @@ impl<'p> Thing<'p> for Undef<'p>{
 }
 impl<'p> Undef<'p>{
     fn new<'q>() -> Undef<'q>{
-        Undef {}
+        Undef {phantom:PhantomData}
     }
 }
 
@@ -58,7 +61,7 @@ impl<'p,'q> Thing<'p> for Object<'p,'q>{
                 *t
             },
             None => {
-                &Undef::new()
+                &Undef {phantom:PhantomData}
             }
         }
     }
@@ -85,8 +88,8 @@ impl<'p,'q> Thing<'p> for Object<'p,'q>{
 }
 
 impl<'p,'q> Object<'p,'q>{
-    pub fn new<'g>(map:&'g HashMap<String,&'g Thing<'g>>) -> Object<'g,'g>{
-        Object {map:*map,n:&10}
+    pub fn new<'g>(map:HashMap<String,&'g Thing<'g>>) -> Object<'g,'g>{
+        Object {map:map,n:&10}
     }
     pub fn empty<'g>() -> Object<'g,'g>{
         Object {map:HashMap::new(),n:&0}
@@ -101,7 +104,9 @@ impl Small for Number{}
 
 impl<'p> Thing<'p> for Number{
     fn getItem(&mut self, key:&mut String) -> &Thing<'p>{
-        return &Undef::new();
+        return self;
+        /*let m=Undef::new();
+        return &'p m;*/
     }
     fn keys(&self) -> RustValue{
         let mut keyList:HashMap<String,RustValue>=HashMap::new();

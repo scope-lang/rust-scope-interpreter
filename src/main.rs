@@ -45,7 +45,8 @@ fn main() {
             };
         }
     }
-    let test:syntax::scope::Object=syntax::scope::Object::empty();
     let value=syntax::scope::Number::new(10f64);
-    test.setItem("x".to_owned(), &value)
+    let mut test:syntax::scope::Object=syntax::scope::Object::empty();
+    test.setItem("x".to_owned(), &value);
+    println!("{:?}",test.value() );
 }
