@@ -128,15 +128,33 @@ impl Number{
     }
 }
 
-/*
-struct Function {
-    protype
+pub struct Boolean {
+    v:bool
+}
+impl Small for Boolean{}
+
+impl<'p> Thing<'p> for Boolean{
+    fn getItem(&mut self, key:&mut String) -> &Thing<'p>{
+        return self;
+        /*let m=Undef::new();
+        return &'p m;*/
+    }
+    fn keys(&self) -> RustValue{
+        let mut keyList:HashMap<String,RustValue>=HashMap::new();
+        let mut i=0;
+        keyList.insert("length".to_owned(),RustValue::F(i as f64));
+        return RustValue::O(keyList);
+    }
+    fn setItem(&mut self,key:String, value:&Thing){
+        return
+    }
+    fn value(&self) -> RustValue{
+        return RustValue::B(self.v);
+    }
 }
 
-impl Thing for Function{
-    fn getItem(&self, key:&mut str ) -> Thing;
-    fn keys(&self) -> RustValue::O;
-    fn setItem(&self,key: &mut str, value:&mut Thing);
-    fn value(&self) -> RustValue;
+impl Boolean{
+    pub fn new(n:bool) -> Boolean{
+        Boolean {v:n}
+    }
 }
-*/

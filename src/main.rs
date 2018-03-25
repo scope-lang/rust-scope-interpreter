@@ -45,8 +45,11 @@ fn main() {
             };
         }
     }
+    println!("end parse test\n=================" );
     let value=syntax::scope::Number::new(10f64);
+    let value2=syntax::scope::Boolean::new(true);
     let mut test:syntax::scope::Object=syntax::scope::Object::empty();
     test.setItem("x".to_owned(), &value);
-    println!("{:?}",test.value() );
+    test.setItem("b".to_owned(), &value2);
+    println!("Test As Rust Value {:?}",test.value() );
 }
