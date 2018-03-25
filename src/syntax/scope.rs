@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::boxed::Box;
 #[derive( PartialEq, Debug)]
 pub enum RustValue {
     F(f64),
@@ -9,10 +10,10 @@ pub enum RustValue {
     O(HashMap<String,RustValue>)
 }
 
-pub trait Thing {
-    fn get(&self, key:&mut String ) -> Thing;
+pub trait Thing<'p> {
+    fn getItem(&mut self, key:&mut String ) -> &Thing<'p>;
     fn keys(&self) -> RustValue;
-    fn set(&self,key: &mut String, value:&mut Thing);
+    fn setItem(&mut self,key:String, value:&'p Thing<'p>);
     fn value(&self) -> RustValue;
 }
 
@@ -20,41 +21,46 @@ pub trait Evaluable {
     fn eval(&self,context: &mut Thing) -> Thing;
 }
 
-pub struct Undef;
+pub struct Undef<'p>;
 
-impl Thing for Undef{
-    fn get(&self, key:&mut String ) -> Thing{
-        return Undef::new();
+impl<'p> Thing<'p> for Undef<'p>{
+    fn getItem(&mut self, key:&mut String ) -> &Thing<'p>{
+        return &Undef::new();
     }
     fn keys(&self) -> RustValue{
         let mut keyList:HashMap<String,RustValue>=HashMap::new();
         let mut i=0;
-        keyList.insert("length".to_string(),RustValue::F(i as f64);
+        keyList.insert("length".to_string(),RustValue::F(i as f64));
         return RustValue::O(keyList);
     }
-    fn set(&self,key: &mut String, value:&mut Thing){
+    fn setItem(&mut self,key: String, value:&Thing){
         return
     }
     fn value(&self) -> RustValue{
         return RustValue::U;
     }
 }
-impl Undef{
-    fn new() -> Undef{
+impl<'p> Undef<'p>{
+    fn new<'q>() -> Undef<'q>{
         Undef {}
     }
 }
 
-pub struct Object {
-    map:HashMap<String,Object>
+pub struct Object<'c, 's: 'c> {
+    map:HashMap<String,&'c Thing<'c>>,
+    n:&'s i64
 }
 
-impl Thing for Object{
-    fn get(&self, key:&mut String) -> Thing{
-        if !self.map.contains_key(key){
-            return Undef::new();
+impl<'p,'q> Thing<'p> for Object<'p,'q>{
+    fn getItem(&mut self, key:&mut String) -> &Thing<'p>{
+        return match (self).map.get(key) {
+            Some(t) => {
+                *t
+            },
+            None => {
+                &Undef::new()
+            }
         }
-        return self.map.get(key);
     }
     fn keys(&self) -> RustValue{
         let mut keyList:HashMap<String,RustValue>=HashMap::new();
@@ -63,45 +69,47 @@ impl Thing for Object{
             keyList.insert(i.to_string(),RustValue::S(key.to_string()));
             i=i+1;
         }
-        keyList.insert("length",RustValue::F(i));
+        keyList.insert("length".to_owned(),RustValue::F(i as f64));
         return RustValue::O(keyList);
     }
-    fn set(&self,key: &mut String, value:&mut Thing){
+    fn setItem(&mut self,key: String, value:&'p Thing<'p>){
         self.map.insert(key,value);
     }
     fn value(&self) -> RustValue{
         let mut converted:HashMap<String,RustValue>=HashMap::new();
-        for (k,v) in self.map{
-            converted.insert(k,v.value());
+        for (k,v) in &self.map{
+            converted.insert(k.to_string(),v.value());
         }
         return RustValue::O(converted);
     }
 }
 
-impl Object{
-    fn new(map:HashMap<String,Object>) -> Object{
-        Object {map:map}
+impl<'p,'q> Object<'p,'q>{
+    pub fn new<'g>(map:&'g HashMap<String,&'g Thing<'g>>) -> Object<'g,'g>{
+        Object {map:*map,n:&10}
     }
-    fn empty() -> Object{
-        Object {map:HashMap::new()}
+    pub fn empty<'g>() -> Object<'g,'g>{
+        Object {map:HashMap::new(),n:&0}
     }
 }
 
 pub struct Number {
     v:f64
 }
+trait Small: Sized { }
+impl Small for Number{}
 
-impl Thing for Number{
-    fn get(&self, key:&mut String) -> Thing{
-        return Undef;
+impl<'p> Thing<'p> for Number{
+    fn getItem(&mut self, key:&mut String) -> &Thing<'p>{
+        return &Undef::new();
     }
     fn keys(&self) -> RustValue{
         let mut keyList:HashMap<String,RustValue>=HashMap::new();
         let mut i=0;
-        keyList.insert("length",RustValue::F(i));
+        keyList.insert("length".to_owned(),RustValue::F(i as f64));
         return RustValue::O(keyList);
     }
-    fn set(&self,key: &mut String, value:&mut Thing){
+    fn setItem(&mut self,key:String, value:&Thing){
         return
     }
     fn value(&self) -> RustValue{
@@ -110,7 +118,7 @@ impl Thing for Number{
 }
 
 impl Number{
-    fn new(n:f64) -> Number{
+    pub fn new(n:f64) -> Number{
         Number {v:n}
     }
 }
@@ -121,9 +129,9 @@ struct Function {
 }
 
 impl Thing for Function{
-    fn get(&self, key:&mut str ) -> Thing;
+    fn getItem(&self, key:&mut str ) -> Thing;
     fn keys(&self) -> RustValue::O;
-    fn set(&self,key: &mut str, value:&mut Thing);
+    fn setItem(&self,key: &mut str, value:&mut Thing);
     fn value(&self) -> RustValue;
 }
 */

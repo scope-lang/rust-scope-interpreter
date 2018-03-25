@@ -1,7 +1,8 @@
+use syntax::scope::Thing;
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
-mod scope;
+mod syntax;
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
@@ -18,7 +19,6 @@ fn main() {
     // --snip--
     let filename=&args[1];
     println!("In file {}", filename);
-
     let mut f = File::open(filename).expect("file not found");
 
     let mut contents = String::new();
@@ -45,5 +45,7 @@ fn main() {
             };
         }
     }
-    let test:scope::Thing=scope::Object::empty();
+    let test:syntax::scope::Object=syntax::scope::Object::empty();
+    let value=syntax::scope::Number::new(10f64);
+    test.setItem("x".to_owned(), &value)
 }
